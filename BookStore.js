@@ -1,5 +1,6 @@
 import readline from 'readline-sync';
 
+
 const books = [
     { name: "Harry Potter", price: 500, status: "available", quantity: 2 },
     { name: "The Hobbit", price: 400, status: "available", quantity: 10 },
@@ -15,7 +16,7 @@ displayMenu();
 function displayMenu() {
     console.log(`\n**** Book Store Menu ****`);
     console.log(`1) Show available books`);
-    console.log(`2) Add book to cart`);
+    console.log(`2) Add book to store`);
     console.log(`3) Show cart`);
     console.log(`4) Exit`);
 
@@ -48,16 +49,13 @@ function showAllBooks() {
     console.log(`+-----+-------------------+-------+------------+----------+`);
 
     books.forEach((book, index) => {
-        // Update the status if quantity reaches 0
-        if (book.quantity === 0) {
-            book.status = "unavailable";
-        }
         console.log(`| ${index.toString().padStart(3)} | ${book.name.padEnd(18)} | ${book.price.toString().padStart(5)} | ${book.quantity.toString().padStart(10)} | ${book.status.padStart(8)} |`);
     });
 
     console.log(`+-----+-------------------+-------+------------+----------+\n`);
     displayMenu();
 }
+
 
 function addBookToCart() {
     const bookIndex = parseInt(readline.question("Enter the index number of the book to add to cart: "));
@@ -67,38 +65,36 @@ function addBookToCart() {
     } else {
         const selectedBook = books[bookIndex];
 
-        
         if (selectedBook.status === "available" && selectedBook.quantity > 0) {
-            const quantity = parseInt(readline.question(`Enter quantity for "${selectedBook.name}" (Available: ${selectedBook.quantity}): `), 10);
+            let requestedQuantity = parseInt(readline.question(`Enter the quantity you want for "${selectedBook.name}" (Available: ${selectedBook.quantity}): `));
 
-            if (quantity > 0 && quantity <= selectedBook.quantity) {
-                const existingCartItem = cart.find(item => item.name === selectedBook.name);
-
-                
-                if (existingCartItem) {
-                    existingCartItem.quantity += quantity;
-                } else {
-                    cart.push({ name: selectedBook.name, price: selectedBook.price, quantity });
-                }
-
-              
-                selectedBook.quantity -= quantity;
-
-                
-                if (selectedBook.quantity === 0) {
-                    selectedBook.status = "unavailable";
-                }
-
-                console.log(`Added ${quantity} of "${selectedBook.name}" to the cart.`);
-            } else {
-                console.log("Invalid quantity or not enough stock available.");
+            
+            while (requestedQuantity > selectedBook.quantity || isNaN(requestedQuantity)) {
+                console.log(`Only ${selectedBook.quantity} units available. Please enter a valid quantity.`);
+                requestedQuantity = parseInt(readline.question(`Enter the quantity for "${selectedBook.name}": `));
             }
+
+            
+            const totalPrice = selectedBook.price * requestedQuantity;
+            cart.push({
+                name: selectedBook.name,
+                price: selectedBook.price,
+                quantity: requestedQuantity,
+                totalPrice: totalPrice,
+            });
+
+            
+            selectedBook.quantity -= requestedQuantity;
+            if (selectedBook.quantity === 0) {
+                selectedBook.status = "unavailable";
+            }
+
+            console.log(`Added ${requestedQuantity} of "${selectedBook.name}" to your cart.`);
         } else {
             console.log(`Book "${selectedBook.name}" is unavailable or out of stock.`);
         }
     }
-   
-    showAllBooks();
+    displayMenu();
 }
 
 
@@ -109,18 +105,17 @@ function showCart() {
         console.log("Your cart is empty.");
     } else {
         console.log("\nYour Cart:");
-        console.log(`+-----+-------------------+-------+----------+--------------+`);
-        console.log(`| No. | Name              | Price | Quantity | Total Price  |`);
-        console.log(`+-----+-------------------+-------+----------+--------------+`);
+        console.log(`+-----+-------------------+-------+----------+-------------+`);
+        console.log(`| No. | Name              | Price | Quantity | Total Price |`);
+        console.log(`+-----+-------------------+-------+----------+-------------+`);
 
         cart.forEach((book, index) => {
-            const totalPrice = book.price * book.quantity;
-            totalCartValue += totalPrice;
-            console.log(`| ${index.toString().padStart(3)} | ${book.name.padEnd(18)} | ${book.price.toString().padStart(5)} | ${book.quantity.toString().padStart(8)} | ${totalPrice.toString().padStart(12)} |`);
+            totalCartValue += book.totalPrice;
+            console.log(`| ${index.toString().padStart(3)} | ${book.name.padEnd(18)} | ${book.price.toString().padStart(5)} | ${book.quantity.toString().padStart(8)} | ${book.totalPrice.toString().padStart(11)} |`);
         });
 
-        console.log(`+-----+-------------------+-------+----------+--------------+`);
-        console.log(`Total Cart Value: ${totalCartValue}`);
+        console.log(`+-----+-------------------+-------+----------+-------------+`);
+        console.log(`Total Value of CART is: ${totalCartValue}\n`);
     }
     displayMenu();
 }
